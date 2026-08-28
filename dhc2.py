@@ -15,6 +15,28 @@ fuel_unit="USG"
 USG_PER_IMP=1.20095
 USG_PER_LTR=0.264172
 
+pilot=0
+row2=0
+row3=0
+baggage=0
+
+# --- PLACEHOLDER DATA - VERVANG MET POH WAARDEN ---
+MAX_GROSS_WT=5370.0
+CG_FWD_LIMIT=85.0
+CG_AFT_LIMIT=95.0
+
+FUEL_ARM_FRONT=20.0
+FUEL_ARM_CENTRE=45.0
+FUEL_ARM_REAR=70.0
+FUEL_ARM_LTIP=55.0
+FUEL_ARM_RTIP=55.0
+
+PILOT_ARM=85.0
+ROW2_ARM=118.0
+ROW3_ARM=150.0
+BAGGAGE_ARM=178.0
+# --- EINDE PLACEHOLDER DATA ---
+
 def usg_to_unit(usg,unit):
     if unit=="IMP":
         return usg/USG_PER_IMP
@@ -179,17 +201,98 @@ def fuel_menu():
             return
 
 def cabin_menu():
-    disp_clr()
-    print("CABIN LOAD")
-    print("----------------")
-    print("TO BE ADDED")
-    input("ENTER")
+    global pilot,row2,row3,baggage
+
+    while True:
+        disp_clr()
+        print("CABIN LOAD - LB")
+        print("----------------")
+        print("1. PILOT+FRONT:",pilot)
+        print("2. ROW 2:",row2)
+        print("3. ROW 3:",row3)
+        print("4. BAGGAGE:",baggage)
+        print("5. RETURN")
+
+        c=input("SELECT: ")
+
+        if c=="1":
+            disp_clr()
+            print("PILOT + FRONT PAX - LB")
+            pilot=float(input("WEIGHT: "))
+
+        elif c=="2":
+            disp_clr()
+            print("ROW 2 PAX - LB")
+            row2=float(input("WEIGHT: "))
+
+        elif c=="3":
+            disp_clr()
+            print("ROW 3 PAX - LB")
+            row3=float(input("WEIGHT: "))
+
+        elif c=="4":
+            disp_clr()
+            print("BAGGAGE - LB")
+            baggage=float(input("WEIGHT: "))
+
+        elif c=="5":
+            return
 
 def generate():
+    if tips:
+        fuel_usg=front+centre+rear+ltip+rtip
+    else:
+        fuel_usg=front+centre+rear
+
+    fuel_wt=fuel_usg*fuel_dens
+    cabin_wt=pilot+row2+row3+baggage
+    total_wt=empty_wt+fuel_wt+cabin_wt
+
+    moment=empty_wt*empty_arm
+    moment=moment+front*fuel_dens*FUEL_ARM_FRONT
+    moment=moment+centre*fuel_dens*FUEL_ARM_CENTRE
+    moment=moment+rear*fuel_dens*FUEL_ARM_REAR
+
+    if tips:
+        moment=moment+ltip*fuel_dens*FUEL_ARM_LTIP
+        moment=moment+rtip*fuel_dens*FUEL_ARM_RTIP
+
+    moment=moment+pilot*PILOT_ARM
+    moment=moment+row2*ROW2_ARM
+    moment=moment+row3*ROW3_ARM
+    moment=moment+baggage*BAGGAGE_ARM
+
+    if total_wt>0:
+        cg=moment/total_wt
+    else:
+        cg=0
+
     disp_clr()
     print("GENERATE W&B")
     print("----------------")
-    print("TO BE ADDED")
+    print("EMPTY WT:",round(empty_wt,1))
+    print("FUEL WT:",round(fuel_wt,1))
+    print("CABIN WT:",round(cabin_wt,1))
+    print("TOTAL WT:",round(total_wt,1))
+    print("CG:",round(cg,2),"IN")
+    input("ENTER")
+
+    disp_clr()
+    print("GENERATE W&B")
+    print("----------------")
+
+    if total_wt>MAX_GROSS_WT:
+        print("OVER MAX WEIGHT!")
+        print("MAX:",MAX_GROSS_WT,"LB")
+    else:
+        print("WEIGHT: OK")
+
+    if cg<CG_FWD_LIMIT or cg>CG_AFT_LIMIT:
+        print("CG OUT OF LIMITS!")
+        print(CG_FWD_LIMIT,"-",CG_AFT_LIMIT,"IN")
+    else:
+        print("CG: OK")
+
     input("ENTER")
     
 # Main Program
